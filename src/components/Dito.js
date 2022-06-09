@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
+import './Dito.css';
 
 
 const credentials = {
     accessKey: "6fae34bc7bec2afd",
-    partnerSignature: "test.1654726014.EMEyj8iCcpkJAEcVNU6KEVstNMPh5zA5QIeePx3DeVxflnx2Rh8ufYzF1jc4MQjRkZhQE2tDzwQa9MaVkNsz1g",
+    partnerSignature: "test.1654789763.YeM29Z83eFo2lsOLOsNmhEh7cfuDNF9ZoAHF9Ki7Nf_HPS1NJ5fq8MuuUnqKdi1B6mciw6Yo4Zb0M2NGd_ifIw",
     partnerId: "test",
     tryOnServer:  "https://vto.partners.api.ditto.com"
 
@@ -12,6 +13,7 @@ const Dito = () => {
 
     const [state, setstate] = useState({ status: null, data: null });
     const [products, setproducts] = useState(null);
+    const [selectedProducts, setSelectedproducts] = useState(null);
 
     useEffect(() => {
         const scanCallbacks = {
@@ -34,9 +36,10 @@ const Dito = () => {
 
         }
 
-   const ditto =   new window.Ditto.Scan(config, scanCallbacks);
+    new window.Ditto.Scan(config, scanCallbacks);
     window.Ditto.getProducts({tryOnServer : config.tryOnServer , accessKey: config.accessKey, partnerSignature: config.partnerSignature}, (data) => {
         setproducts(data.ids)
+        setSelectedproducts(data.ids[0])
      });
 
     }, []);
@@ -59,19 +62,30 @@ const Dito = () => {
                     "scanId": state.data.scanId,
                     "overlaySignature": state.data.overlaySignature,
                     "disablePreview": true,
-                    "glassesId": "big_glasses"
+                    "glassesId": selectedProducts
                 }
         
         
                 new window.Ditto.Overlay(OverlayConfig,overlayCallbacks); 
     }
 
+    console.log(selectedProducts)
     return (
-        <div>
+        <div className='dito-wrapper'>
             <div id="scan_frame" />
             {state.status == "SUCCESS" ? (
                 <>
+                    <div className='ditto-controls'>
+                    <select value={selectedProducts} onChange={(e) =>setSelectedproducts(e.target.value) }>{
+                        products.map((product) => {
+                            return (
+                                <option  value={product} key={product}>{product}</option>
+                            )
+                        })
+                        }</select>
                     <button onClick={drawOverlay}>Try the Overlay</button>
+                    </div>
+
                     <div style={{height: "640px"}} id="overlay_frame" />
                 </>
             ) : null}
