@@ -1,50 +1,81 @@
 import React, { useEffect, useState } from 'react';
 import './Dito.css';
+import axios from "axios";
 
-
-const credentials = {
-    accessKey: "6fae34bc7bec2afd",
-    partnerSignature: "test.1654789763.YeM29Z83eFo2lsOLOsNmhEh7cfuDNF9ZoAHF9Ki7Nf_HPS1NJ5fq8MuuUnqKdi1B6mciw6Yo4Zb0M2NGd_ifIw",
-    partnerId: "test",
-    tryOnServer:  "https://vto.partners.api.ditto.com"
-
-}
 const Dito = () => {
 
     const [state, setstate] = useState({ status: null, data: null });
     const [products, setproducts] = useState(null);
     const [selectedProducts, setSelectedproducts] = useState(null);
+    const [credentials, setCredentials] = useState({
+        accessKey: "6fae34bc7bec2afd",
+        partnerSignature: null,
+        partnerId: "test",
+        tryOnServer: "https://vto.partners.api.ditto.com"
+    });
+
+    useEffect( () => {
+         (async () => {
+            const data = JSON.stringify({
+                message: credentials.partnerId
+              });
+            const config = {
+                method: 'post',
+                url: 'http://127.0.0.1:5000/signature',
+                headers: { 
+                  'Content-Type': 'application/json'
+                },
+                data 
+              };
+              
+             const data_raw = await axios(config)
+              
+             setCredentials({...credentials,partnerSignature: data_raw.data })
+        })()
+
+    },[])
 
     useEffect(() => {
-        const scanCallbacks = {
-            success: data => setstate({ status: "SUCCESS", data: data }),
-            progress: data => setstate({ status: data.status, data: data }),
-            failure: data => setstate({ status: data.status, data: data }),
-            close: data => setstate({ status: data.status, data: data }),
-            faceiq_result: data => console.log(data),
-        };
+     
+        if(credentials.partnerSignature) {
+            const scanCallbacks = {
+                success: data => setstate({ status: "SUCCESS", data: data }),
+                progress: data => setstate({ status: data.status, data: data }),
+                failure: data => setstate({ status: data.status, data: data }),
+                close: data => setstate({ status: data.status, data: data }),
+                faceiq_result: data => console.log(data),
+            };
+    
+            const config = {
+    
+                "tryOnServer": credentials.tryOnServer,
+                "domSelector": "#scan_frame",
+                "accessKey": credentials.accessKey,
+                "partnerSignature": credentials.partnerSignature,
+                "partnerId": credentials.partnerId,
+                "disableClose": false,
+                "enableFaceInsights": true,
+                "disableConsent": "true",
+    
+            }
 
-        const config = {
+            console.log(credentials)
 
-            "tryOnServer": credentials.tryOnServer,
-            "domSelector": "#scan_frame",
-            "accessKey": credentials.accessKey,
-            "partnerSignature": credentials.partnerSignature,
-            "partnerId": credentials.partnerId,
-            "disableClose": false,
-            "enableFaceInsights": true
-
+            new window.Ditto.Scan(config, scanCallbacks);
+    
+           
+    
         }
-
-    new window.Ditto.Scan(config, scanCallbacks);
+   
+/*     
     window.Ditto.getProducts({tryOnServer : config.tryOnServer , accessKey: config.accessKey, partnerSignature: config.partnerSignature}, (data) => {
         setproducts(data.ids)
         setSelectedproducts(data.ids[0])
      });
+ */
+    }, [credentials]);
 
-    }, []);
-
-    const drawOverlay = () => {
+/*     const drawOverlay = () => {
 
                 const overlayCallbacks = {
                     success: e => console.log("Overlay created"),
@@ -67,9 +98,8 @@ const Dito = () => {
         
         
                 new window.Ditto.Overlay(OverlayConfig,overlayCallbacks); 
-    }
+    } */
 
-    console.log(selectedProducts)
     return (
         <div className='dito-wrapper'>
             <div id="scan_frame" />
@@ -83,7 +113,7 @@ const Dito = () => {
                             )
                         })
                         }</select>
-                    <button onClick={drawOverlay}>Try the Overlay</button>
+           {/*          <button onClick={drawOverlay}>Try the Overlay</button> */}
                     </div>
 
                     <div style={{height: "640px"}} id="overlay_frame" />
